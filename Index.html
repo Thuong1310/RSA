@@ -1,0 +1,588 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ứng Dụng Truyền File Có Ký Số</title>
+    <style>
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+    }
+
+    body {
+        font-family: 'Inter', 'Segoe UI', sans-serif;
+        background-color: #f4f6f8;
+        color: #333;
+        min-height: 100vh;
+    }
+
+    .container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 30px 20px;
+    }
+
+    .header {
+        text-align: center;
+        margin-bottom: 30px;
+    }
+
+    .header h1 {
+        font-size: 2.2em;
+        color: #1a237e;
+        margin-bottom: 10px;
+    }
+
+    .header p {
+        color: #666;
+        font-size: 1em;
+    }
+
+    .tabs {
+        display: flex;
+        justify-content: center;
+        margin-bottom: 20px;
+        background-color: #fff;
+        border-radius: 8px;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+        overflow: hidden;
+    }
+
+    .tab {
+        flex: 1;
+        padding: 12px;
+        background: none;
+        border: none;
+        text-align: center;
+        font-weight: 500;
+        color: #1a237e;
+        cursor: pointer;
+        transition: 0.2s ease;
+    }
+
+    .tab:hover {
+        background-color: #e8eaf6;
+    }
+
+    .tab.active {
+        background-color: #1a237e;
+        color: white;
+        font-weight: 600;
+    }
+
+    .tab-content {
+        display: none;
+    }
+
+    .tab-content.active {
+        display: block;
+    }
+
+    .card {
+        background-color: #fff;
+        border-radius: 10px;
+        padding: 25px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+        margin-bottom: 30px;
+    }
+
+    .card h2 {
+        font-size: 1.4em;
+        color: #1a237e;
+        margin-bottom: 20px;
+    }
+
+    .upload-area {
+        border: 2px dashed #90caf9;
+        border-radius: 10px;
+        padding: 40px;
+        text-align: center;
+        background-color: #e3f2fd;
+        transition: 0.3s ease;
+        cursor: pointer;
+    }
+
+    .upload-area:hover {
+        background-color: #bbdefb;
+    }
+
+    .upload-area.drag-over {
+        background-color: #90caf9;
+        border-color: #42a5f5;
+    }
+
+    .file-input {
+        display: none;
+    }
+
+    .btn {
+        background-color: #1a237e;
+        color: white;
+        border: none;
+        padding: 12px 25px;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 14px;
+        transition: 0.2s ease;
+    }
+
+    .btn:hover {
+        background-color: #0d1544;
+    }
+
+    .btn-secondary {
+        background-color: #546e7a;
+    }
+
+    .btn-secondary:hover {
+        background-color: #37474f;
+    }
+
+    .btn-small {
+        font-size: 13px;
+        padding: 8px 16px;
+    }
+
+    .form-group {
+        margin-bottom: 20px;
+    }
+
+    .form-group label {
+        display: block;
+        margin-bottom: 6px;
+        font-weight: 500;
+        color: #1a237e;
+    }
+
+    .form-control {
+        width: 100%;
+        padding: 10px;
+        font-size: 15px;
+        border: 1px solid #ccc;
+        border-radius: 6px;
+    }
+
+    .form-control:focus {
+        border-color: #1a237e;
+        outline: none;
+        box-shadow: 0 0 0 2px rgba(26, 35, 126, 0.1);
+    }
+
+    .result {
+        margin-top: 20px;
+        padding: 15px;
+        border-radius: 6px;
+    }
+
+    .result.success {
+        background-color: #d0f2df;
+        color: #2e7d32;
+        border: 1px solid #a5d6a7;
+    }
+
+    .result.error {
+        background-color: #fbe9e7;
+        color: #d32f2f;
+        border: 1px solid #ef9a9a;
+    }
+
+    .file-info {
+        margin-top: 20px;
+        background-color: #f1f8e9;
+        padding: 15px;
+        border-radius: 6px;
+        border: 1px solid #c5e1a5;
+    }
+
+    .file-info h4 {
+        margin-bottom: 10px;
+        color: #33691e;
+    }
+
+    .file-info p,
+    .file-info textarea {
+        margin: 5px 0;
+        font-size: 14px;
+    }
+
+    .files-list {
+        max-height: 500px;
+        overflow-y: auto;
+    }
+
+    .file-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        background-color: #f9f9f9;
+        padding: 15px;
+        border-radius: 6px;
+        margin-bottom: 10px;
+        border: 1px solid #e0e0e0;
+    }
+
+    .file-actions {
+        display: flex;
+        gap: 10px;
+    }
+
+    .loading {
+        display: inline-block;
+        width: 18px;
+        height: 18px;
+        border: 3px solid #ccc;
+        border-radius: 50%;
+        border-top-color: #1a237e;
+        animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+        to { transform: rotate(360deg); }
+    }
+
+    @media (max-width: 768px) {
+        .tabs {
+            flex-direction: column;
+        }
+
+        .file-item {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 10px;
+        }
+
+        .file-actions {
+            justify-content: flex-end;
+            width: 100%;
+        }
+    }
+</style>
+
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Ứng Dụng Truyền File Có Ký Số</h1>
+            <p>Bảo mật và chia sẻ file một cách an toàn với chữ ký số 🔐</p>
+        </div>
+
+        <div class="tabs">
+            <button class="tab active" onclick="switchTab('upload')">📤 Upload & Ký Số</button>
+            <button class="tab" onclick="switchTab('verify')">✅ Xác Minh</button>
+            <button class="tab" onclick="switchTab('files')">📁 Danh Sách File</button>
+        </div>
+
+        <!-- Tab Upload -->
+        <div id="upload-tab" class="tab-content active">
+            <div class="card">
+                <h2>📤 Upload và Ký Số File</h2>
+                <div class="upload-area" onclick="document.getElementById('upload-file').click()">
+                    <div style="font-size: 3em; margin-bottom: 15px;"></div>
+                    <p style="font-size: 1.2em; color: #e91e63; margin-bottom: 10px;">Kéo thả file vào đây hoặc click để chọn</p>
+                    <p style="color: #666;">Hỗ trợ tất cả định dạng file</p>
+                </div>
+                <input type="file" id="upload-file" class="file-input">
+                <div style="text-align: center; margin-top: 20px;">
+                    <button class="btn" onclick="uploadFile()">
+                        <span id="upload-loading" style="display: none;" class="loading"></span>
+                        Upload & Ký Số
+                    </button>
+                </div>
+                <div id="upload-result"></div>
+            </div>
+        </div>
+
+        <!-- Tab Verify -->
+        <div id="verify-tab" class="tab-content">
+            <div class="card">
+                <h2>✅ Xác Minh Chữ Ký Số</h2>
+                <div class="form-group">
+                    <label>Chọn file cần xác minh:</label>
+                    <input type="file" id="verify-file" class="form-control">
+                </div>
+                <div class="form-group">
+                    <label>Nhập chữ ký số:</label>
+                    <textarea id="signature-input" class="form-control" rows="4" placeholder="Dán chữ ký số vào đây..."></textarea>
+                </div>
+                <div style="text-align: center;">
+                    <button class="btn btn-secondary" onclick="verifyFile()">
+                        <span id="verify-loading" style="display: none;" class="loading"></span>
+                        Xác Minh Chữ Ký
+                    </button>
+                </div>
+                <div id="verify-result"></div>
+            </div>
+        </div>
+
+        <!-- Tab Files -->
+        <div id="files-tab" class="tab-content">
+            <div class="card">
+                <h2>📁 Danh Sách File Đã Upload</h2>
+                <div style="text-align: center; margin-bottom: 20px;">
+                    <button class="btn btn-secondary" onclick="loadFilesList()">
+                        <span id="files-loading" style="display: none;" class="loading"></span>
+                        Tải Danh Sách
+                    </button>
+                </div>
+                <div id="files-list" class="files-list"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Khởi tạo drag & drop
+        const uploadArea = document.querySelector('.upload-area');
+        
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.classList.add('drag-over');
+        });
+        
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.classList.remove('drag-over');
+        });
+        
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('drag-over');
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                document.getElementById('upload-file').files = files;
+                createSparkle(e.clientX, e.clientY);
+            }
+        });
+
+        // Tạo hiệu ứng sparkle
+        function createSparkle(x, y) {
+            const sparkle = document.createElement('div');
+            sparkle.className = 'sparkle';
+            sparkle.innerHTML = '✨';
+            sparkle.style.left = x + 'px';
+            sparkle.style.top = y + 'px';
+            document.body.appendChild(sparkle);
+            
+            setTimeout(() => {
+                sparkle.remove();
+            }, 2000);
+        }
+
+        // Chuyển đổi tab
+        function switchTab(tabName) {
+            // Ẩn tất cả tab content
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // Bỏ active cho tất cả tab
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // Hiển thị tab được chọn
+            document.getElementById(tabName + '-tab').classList.add('active');
+            event.target.classList.add('active');
+        }
+
+        // Upload file
+        async function uploadFile() {
+            const fileInput = document.getElementById('upload-file');
+            const resultDiv = document.getElementById('upload-result');
+            const loadingSpan = document.getElementById('upload-loading');
+            
+            if (!fileInput.files[0]) {
+                showResult(resultDiv, 'Vui lòng chọn file!', 'error');
+                return;
+            }
+            
+            const formData = new FormData();
+            formData.append('file', fileInput.files[0]);
+            
+            loadingSpan.style.display = 'inline-block';
+            
+            try {
+                const response = await fetch('/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    showResult(resultDiv, result.message, 'success');
+                    showFileInfo(resultDiv, result);
+                } else {
+                    showResult(resultDiv, result.message, 'error');
+                }
+            } catch (error) {
+                showResult(resultDiv, 'Lỗi kết nối: ' + error.message, 'error');
+            } finally {
+                loadingSpan.style.display = 'none';
+            }
+        }
+
+        // Xác minh file
+        async function verifyFile() {
+            const fileInput = document.getElementById('verify-file');
+            const signatureInput = document.getElementById('signature-input');
+            const resultDiv = document.getElementById('verify-result');
+            const loadingSpan = document.getElementById('verify-loading');
+            
+            if (!fileInput.files[0]) {
+                showResult(resultDiv, 'Vui lòng chọn file!', 'error');
+                return;
+            }
+            
+            if (!signatureInput.value.trim()) {
+                showResult(resultDiv, 'Vui lòng nhập chữ ký số!', 'error');
+                return;
+            }
+            
+            const formData = new FormData();
+            formData.append('file', fileInput.files[0]);
+            formData.append('signature', signatureInput.value.trim());
+            
+            loadingSpan.style.display = 'inline-block';
+            
+            try {
+                const response = await fetch('/verify', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    const status = result.valid ? 'success' : 'error';
+                    showResult(resultDiv, result.message, status);
+                    
+                    if (result.valid) {
+                        const info = `
+                            <div class="file-info">
+                                <h4>✅ Thông Tin File Hợp Lệ</h4>
+                                <p><strong>Tên file:</strong> ${result.filename}</p>
+                                <p><strong>Hash:</strong> ${result.hash}</p>
+                                <p><strong>Trạng thái:</strong> <span style="color: green;">Chữ ký hợp lệ</span></p>
+                            </div>
+                        `;
+                        resultDiv.innerHTML += info;
+                    }
+                } else {
+                    showResult(resultDiv, result.message, 'error');
+                }
+            } catch (error) {
+                showResult(resultDiv, 'Lỗi kết nối: ' + error.message, 'error');
+            } finally {
+                loadingSpan.style.display = 'none';
+            }
+        }
+
+        // Tải danh sách file
+        async function loadFilesList() {
+            const filesDiv = document.getElementById('files-list');
+            const loadingSpan = document.getElementById('files-loading');
+            
+            loadingSpan.style.display = 'inline-block';
+            
+            try {
+                const response = await fetch('/list_files');
+                const result = await response.json();
+                
+                if (result.success) {
+                    if (result.files.length === 0) {
+                        filesDiv.innerHTML = '<p style="text-align: center; color: #666;">Chưa có file nào được upload</p>';
+                    } else {
+                        let html = '';
+                        result.files.forEach(file => {
+                            html += `
+                                <div class="file-item">
+                                    <div>
+                                        <strong style="color: #e91e63;">${file.filename}</strong><br>
+                                        <small>Size: ${formatFileSize(file.size)} | Upload: ${file.upload_time}</small><br>
+                                        <small style="color: #666; word-break: break-all;">Hash: ${file.hash}</small>
+                                    </div>
+                                    <div class="file-actions">
+                                        <button class="btn btn-small" onclick="downloadFile('${file.id}')">📥 Tải xuống</button>
+                                        <button class="btn btn-secondary btn-small" onclick="downloadPackage('${file.id}')">📦 Tải gói</button>
+                                    </div>
+                                </div>
+                            `;
+                        });
+                        filesDiv.innerHTML = html;
+                    }
+                } else {
+                    filesDiv.innerHTML = '<p style="text-align: center; color: #666;">Không thể tải danh sách file</p>';
+                }
+            } catch (error) {
+                filesDiv.innerHTML = '<p style="text-align: center; color: #666;">Lỗi kết nối: ' + error.message + '</p>';
+            } finally {
+                loadingSpan.style.display = 'none';
+            }
+        }
+
+        // Download file
+        function downloadFile(fileId) {
+            window.open(`/download/${fileId}`, '_blank');
+        }
+
+        // Download package
+        function downloadPackage(fileId) {
+            window.open(`/download_package/${fileId}`, '_blank');
+        }
+
+        // Format file size
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+
+        // Hiển thị kết quả
+        function showResult(container, message, type) {
+            container.innerHTML = `<div class="result ${type}">${message}</div>`;
+        }
+
+        // Hiển thị thông tin file
+        function showFileInfo(container, fileInfo) {
+            const info = `
+                <div class="file-info">
+                    <h4>📋 Thông Tin File</h4>
+                    <p><strong>Tên file:</strong> ${fileInfo.filename}</p>
+                    <p><strong>Kích thước:</strong> ${formatFileSize(fileInfo.size)}</p>
+                    <p><strong>Thời gian upload:</strong> ${fileInfo.upload_time}</p>
+                    <p><strong>Hash:</strong> <span style="word-break: break-all;">${fileInfo.hash}</span></p>
+                    <p><strong>Chữ ký số:</strong></p>
+                    <textarea readonly style="width: 100%; height: 100px; padding: 10px; border-radius: 5px; border: 1px solid #ffb3d9; background: #fff; font-family: monospace; font-size: 12px;">${fileInfo.signature}</textarea>
+                    <div style="margin-top: 15px; text-align: center;">
+                        <button class="btn btn-small" onclick="downloadFile('${fileInfo.file_id}')">📥 Tải xuống file</button>
+                        <button class="btn btn-secondary btn-small" onclick="downloadPackage('${fileInfo.file_id}')">📦 Tải gói đầy đủ</button>
+                    </div>
+                </div>
+            `;
+            container.innerHTML += info;
+        }
+
+        // Tự động tải danh sách file khi load trang
+        window.addEventListener('load', () => {
+            // Thêm hiệu ứng sparkle ngẫu nhiên
+            setInterval(() => {
+                if (Math.random() < 0.1) {
+                    const x = Math.random() * window.innerWidth;
+                    const y = Math.random() * window.innerHeight;
+                    createSparkle(x, y);
+                }
+            }, 3000);
+        });
+
+        // Copy chữ ký số
+        function copySignature(signature) {
+            navigator.clipboard.writeText(signature).then(() => {
+                alert('Đã copy chữ ký số!');
+            });
+        }
+    </script>
+</body>
+</html>
